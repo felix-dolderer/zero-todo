@@ -20,7 +20,16 @@ CREATE TABLE "message" (
   "senderID" VARCHAR REFERENCES "user"(id),
   "mediumID" VARCHAR REFERENCES "medium"(id),
   "body" VARCHAR NOT NULL,
-  "timestamp" TIMESTAMP not null
+  "timestamp" TIMESTAMP NOT NULL
+);
+
+CREATE TABLE "task" (
+  "id" INT PRIMARY KEY,
+  "creatorID" VARCHAR REFERENCES "user"(id),
+  "assigneeID" VARCHAR REFERENCES "user"(id),
+  "title" VARCHAR NOT NULL,
+  "timestamp" TIMESTAMP NOT NULL,
+  "completed" BOOLEAN NOT NULL
 );
 
 INSERT INTO "user" (id, name, partner) VALUES ('ycD76wW4R2', 'Aaron', true);

@@ -15,10 +15,23 @@ function App() {
 
   const [filterUser, setFilterUser] = useState<string>("")
   const [filterText, setFilterText] = useState<string>("")
+  const [onlyMyTasks, setOnlyMyTasks] = useState<boolean>(false)
   const [page, setPage] = useState<number>(1)
 
   const all = z.query.message
   const [allMessages] = useQuery(all)
+
+  const allTasksQuery = z.query.task
+  const [allTasks] = useQuery(allTasksQuery)
+
+  let openTasksQuery = allTasksQuery
+    .related("assignee")
+    .where("complete", false)
+    .orderBy("timestamp", "desc")
+
+  if (onlyMyTasks) {
+    openTasksQuery = openTasksQuery.where("assigneeID", z.userID)
+  }
 
   let filtered = all
     .related("medium")
@@ -47,6 +60,8 @@ function App() {
   const handlePageInput = (newPage: number) => {
     setPage(newPage)
   }
+
+  const [openTasks] = useQuery(openTasksQuery)
 
   const hasFilters = filterUser || filterText
   const [action, setAction] = useState<"add" | "remove" | undefined>(undefined)
@@ -180,6 +195,14 @@ function App() {
             min={1}
             max={Math.ceil(allMessages.length / 10)}
           />
+          <label>
+            <input
+              type="checkbox"
+              checked={onlyMyTasks}
+              onChange={(e) => setOnlyMyTasks(e.target.checked)}
+            />
+            Only show my tasks
+          </label>
         </div>
         <div
           style={{
@@ -248,6 +271,9 @@ function App() {
           )}
         </em>
       </div>
+      <h3>
+        There are {allTasks.length} tasks. {openTasks.length} are still open.
+      </h3>
       {filteredPaginatedMessages.length === 0 ? (
         <h3>
           <em>No posts found 😢</em>
