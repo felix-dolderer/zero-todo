@@ -17,7 +17,7 @@ import {
   boolean,
   number,
   relationships,
-} from "@rocicorp/zero";
+} from "@rocicorp/zero"
 
 const message = table("message")
   .columns({
@@ -27,7 +27,7 @@ const message = table("message")
     body: string(),
     timestamp: number(),
   })
-  .primaryKey("id");
+  .primaryKey("id")
 
 const user = table("user")
   .columns({
@@ -35,14 +35,14 @@ const user = table("user")
     name: string(),
     partner: boolean(),
   })
-  .primaryKey("id");
+  .primaryKey("id")
 
 const medium = table("medium")
   .columns({
     id: string(),
     name: string(),
   })
-  .primaryKey("id");
+  .primaryKey("id")
 
 const messageRelationships = relationships(message, ({ one }) => ({
   sender: one({
@@ -55,33 +55,33 @@ const messageRelationships = relationships(message, ({ one }) => ({
     destField: ["id"],
     destSchema: medium,
   }),
-}));
+}))
 
 export const schema = createSchema(1, {
   tables: [user, medium, message],
   relationships: [messageRelationships],
-});
+})
 
-export type Schema = typeof schema;
-export type Message = Row<typeof schema.tables.message>;
-export type Medium = Row<typeof schema.tables.medium>;
-export type User = Row<typeof schema.tables.user>;
+export type Schema = typeof schema
+export type Message = Row<typeof schema.tables.message>
+export type Medium = Row<typeof schema.tables.medium>
+export type User = Row<typeof schema.tables.user>
 
 // The contents of your decoded JWT.
 type AuthData = {
-  sub: string | null;
-};
+  sub: string | null
+}
 
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
   const allowIfLoggedIn = (
     authData: AuthData,
-    { cmpLit }: ExpressionBuilder<Schema, keyof Schema["tables"]>
-  ) => cmpLit(authData.sub, "IS NOT", null);
+    { cmpLit }: ExpressionBuilder<Schema, keyof Schema["tables"]>,
+  ) => cmpLit(authData.sub, "IS NOT", null)
 
   const allowIfMessageSender = (
     authData: AuthData,
-    { cmp }: ExpressionBuilder<Schema, "message">
-  ) => cmp("senderID", "=", authData.sub ?? "");
+    { cmp }: ExpressionBuilder<Schema, "message">,
+  ) => cmp("senderID", "=", authData.sub ?? "")
 
   return {
     medium: {
@@ -114,5 +114,5 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
         delete: [allowIfLoggedIn],
       },
     },
-  };
-});
+  }
+})
