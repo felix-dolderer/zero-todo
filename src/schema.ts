@@ -29,6 +29,17 @@ const message = table("message")
   })
   .primaryKey("id")
 
+const task = table("task")
+  .columns({
+    id: number(),
+    creatorID: string(),
+    assigneeID: string(),
+    title: string(),
+    timestamp: number(),
+    complete: boolean(),
+  })
+  .primaryKey("id")
+
 const user = table("user")
   .columns({
     id: string(),
@@ -57,15 +68,29 @@ const messageRelationships = relationships(message, ({ one }) => ({
   }),
 }))
 
+const taskRelationships = relationships(task, ({ one }) => ({
+  creator: one({
+    sourceField: ["creatorID"],
+    destField: ["id"],
+    destSchema: user,
+  }),
+  assignee: one({
+    sourceField: ["assigneeID"],
+    destField: ["id"],
+    destSchema: user,
+  }),
+}))
+
 export const schema = createSchema(1, {
-  tables: [user, medium, message],
-  relationships: [messageRelationships],
+  tables: [user, medium, message, task],
+  relationships: [messageRelationships, taskRelationships],
 })
 
 export type Schema = typeof schema
 export type Message = Row<typeof schema.tables.message>
 export type Medium = Row<typeof schema.tables.medium>
 export type User = Row<typeof schema.tables.user>
+export type Task = Row<typeof schema.tables.task>
 
 // The contents of your decoded JWT.
 type AuthData = {
@@ -82,6 +107,11 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
     authData: AuthData,
     { cmp }: ExpressionBuilder<Schema, "message">,
   ) => cmp("senderID", "=", authData.sub ?? "")
+
+  const allowIfCreator = (
+    authData: AuthData,
+    { cmp }: ExpressionBuilder<Schema, "task">,
+  ) => cmp("creatorID", "=", authData.sub ?? "")
 
   return {
     medium: {
@@ -112,6 +142,15 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
         },
         // must be logged in to delete
         delete: [allowIfLoggedIn],
+      },
+    },
+    task: {
+      row: {
+        insert: [allowIfCreator],
+        update: {
+          preMutation: [allowIfCreator],
+        },
+        delete: [allowIfCreator],
       },
     },
   }
