@@ -15,6 +15,7 @@ function App() {
 
   const [filterUser, setFilterUser] = useState<string>("")
   const [filterText, setFilterText] = useState<string>("")
+  const [page, setPage] = useState<number>(1)
 
   const all = z.query.message
   const [allMessages] = useQuery(all)
@@ -33,6 +34,19 @@ function App() {
   }
 
   const [filteredMessages] = useQuery(filtered)
+
+  let filteredPaginated = filtered.limit(10)
+  const firstMessageOnPage = filteredMessages[10 * (page - 1)]
+  if (firstMessageOnPage) {
+    filteredPaginated = filteredPaginated.start(firstMessageOnPage, {
+      inclusive: true,
+    })
+  }
+  const [filteredPaginatedMessages] = useQuery(filteredPaginated)
+
+  const handlePageInput = (newPage: number) => {
+    setPage(newPage)
+  }
 
   const hasFilters = filterUser || filterText
   const [action, setAction] = useState<"add" | "remove" | undefined>(undefined)
@@ -159,6 +173,13 @@ function App() {
             Remove Messages
           </button>
           <em>(hold down buttons to repeat)</em>
+          <input
+            type="number"
+            value={page}
+            onChange={(e) => handlePageInput(e.target.valueAsNumber)}
+            min={1}
+            max={Math.ceil(allMessages.length / 10)}
+          />
         </div>
         <div
           style={{
@@ -207,10 +228,14 @@ function App() {
       <div className="controls">
         <em>
           {!hasFilters ? (
-            <>Showing all {filteredMessages.length} messages</>
+            <>
+              Showing messages {(page - 1) * 10 + 1}-
+              {(page - 1) * 10 + filteredPaginatedMessages.length} of{" "}
+              {allMessages.length}
+            </>
           ) : (
             <>
-              Showing {filteredMessages.length} of {allMessages.length}{" "}
+              Showing {filteredPaginatedMessages.length} of {allMessages.length}{" "}
               messages. Try opening{" "}
               <a
                 href="/"
@@ -223,7 +248,7 @@ function App() {
           )}
         </em>
       </div>
-      {filteredMessages.length === 0 ? (
+      {filteredPaginatedMessages.length === 0 ? (
         <h3>
           <em>No posts found 😢</em>
         </h3>
@@ -236,6 +261,7 @@ function App() {
         >
           <thead>
             <tr>
+              <th>ID</th>
               <th>Sender</th>
               <th>Medium</th>
               <th>Message</th>
@@ -244,8 +270,9 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {filteredMessages.map((message) => (
+            {filteredPaginatedMessages.map((message) => (
               <tr key={message.id}>
+                <td align="left">{message.id}</td>
                 <td align="left">{message.sender?.name}</td>
                 <td align="left">{message.medium?.name}</td>
                 <td align="left">{message.body}</td>
